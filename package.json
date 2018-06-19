@@ -1,0 +1,26 @@
+{
+  "name": "streamz",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aliariff/streamz.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aliariff/streamz/issues"
+  },
+  "homepage": "https://github.com/aliariff/streamz#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "opn": "^5.3.0",
+    "puppeteer": "^1.5.0",
+    "request": "^2.87.0",
+    "request-promise": "^4.2.2"
+  }
+}
