@@ -12,7 +12,7 @@ streamLive = async function(channelName) {
     console.log(`checking channel: ${channelName}`);
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
-    await page.goto('https://www.twitch.tv/' + channelName, {
+    await page.goto(`https://www.twitch.tv/${channelName}`, {
         waitUntil: 'networkidle2'
     });
     const content = await page.content();
@@ -57,7 +57,7 @@ findNewChannel = async function() {
         if (liveChannel != null) {
             console.log(`Found live channel: ${liveChannel}`);
             currentChannel = liveChannel;
-            opn('https://player.twitch.tv/?channel=' + liveChannel);
+            opn(`https://player.twitch.tv/?channel=${liveChannel}`);
         }
     });
 };
