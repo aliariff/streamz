@@ -1,18 +1,15 @@
-const rp = require('request-promise');
-const opn = require('opn');
-const url = require('url');
-const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
-const websites = [
-    'http://footy-area.blogspot.com',
-    'http://stream-cr7.net/twitch.html',
-    'http://onetopstream.website/liver.php',
-    'http://www.freesport.info',
-    'http://www.bilasport.com/p/cup.html',
-    'http://messistream.com/Soccer/Ronaldo7/hd2.html',
-];
+const fs = require('fs');
+const opn = require('opn');
+const puppeteer = require('puppeteer');
+const rp = require('request-promise');
+const url = require('url');
+
+const websites = fs.readFileSync('./links.txt', 'utf-8').split('\n');
+let currentChannel = null;
 
 streamLive = async function(channelName) {
+    console.log(`checking channel: ${channelName}`);
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
     await page.goto('https://www.twitch.tv/' + channelName, {
@@ -28,10 +25,16 @@ streamLive = async function(channelName) {
 };
 
 getChannel = async function(website) {
-    const body = await rp(website);
+    console.log(`visiting: ${website}`);
+    let result = [];
+    let body;
+    try {
+        body = await rp(website);
+    } catch (e) {
+        return result;
+    }
     let $ = cheerio.load(body);
     let links = $('iframe');
-    let result = [];
     $(links).each(function(i, link) {
         const src = $(link).attr('src');
         const channel = url.parse(src, true).query.channel;
@@ -40,23 +43,43 @@ getChannel = async function(website) {
     return result;
 };
 
-main = async function() {
-    let promises = [];
-    websites.forEach(function(website) {
-        promises.push(getChannel(website));
-    });
-    let allChannels = await Promise.all(promises);
+findNewChannel = async function() {
+    console.log('findNewChannel');
+    let allChannels = await Promise.all(getChannelPromises);
     allChannels = [].concat(...allChannels);
-    promises = [];
+    console.log(`all available channels: ${allChannels}`);
+    let streamLivePromises = [];
     allChannels.forEach(function(channelName) {
-        promises.push(streamLive(channelName));
+        streamLivePromises.push(streamLive(channelName));
     });
-    let liveChannels = await Promise.all(promises);
+    let liveChannels = await Promise.all(streamLivePromises);
     liveChannels.forEach(function(liveChannel) {
         if (liveChannel != null) {
+            console.log(`Found live channel: ${liveChannel}`);
+            currentChannel = liveChannel;
             opn('https://player.twitch.tv/?channel=' + liveChannel);
         }
     });
 };
+
+crawler = async function() {
+    if (currentChannel == null) {
+        await findNewChannel();
+    } else {
+        const channel = await streamLive(currentChannel);
+        currentChannel = channel;
+    }
+};
+
+main = async function() {
+    while (true) {
+        await crawler();
+    }
+};
+
+let getChannelPromises = [];
+websites.forEach(function(website) {
+    getChannelPromises.push(getChannel(website));
+});
 
 main();
