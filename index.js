@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const cheerio = require('cheerio');
 const fs = require('fs');
 const opn = require('opn');
@@ -46,20 +47,20 @@ getChannel = async function(website) {
 findNewChannel = async function() {
     console.log('findNewChannel');
     let allChannels = await Promise.all(getChannelPromises);
-    allChannels = [].concat(...allChannels);
+    allChannels = _.flatten(allChannels);
+    allChannels = _.compact(allChannels);
     console.log(`all available channels: ${allChannels}`);
     let streamLivePromises = [];
-    allChannels.forEach(function(channelName) {
+    for (let channelName of allChannels) {
         streamLivePromises.push(streamLive(channelName));
-    });
+    }
     let liveChannels = await Promise.all(streamLivePromises);
-    liveChannels.forEach(function(liveChannel) {
-        if (liveChannel != null) {
-            console.log(`Found live channel: ${liveChannel}`);
-            currentChannel = liveChannel;
-            opn(`https://player.twitch.tv/?channel=${liveChannel}`);
-        }
-    });
+    liveChannels = _.compact(liveChannels);
+    currentChannel = _.head(liveChannels);
+    if (currentChannel) {
+        console.log(`Found live channel: ${currentChannel}`);
+        opn(`https://player.twitch.tv/?channel=${currentChannel}`);
+    }
 };
 
 crawler = async function() {
@@ -78,8 +79,8 @@ main = async function() {
 };
 
 let getChannelPromises = [];
-websites.forEach(function(website) {
+for (let website of websites) {
     getChannelPromises.push(getChannel(website));
-});
+}
 
 main();
